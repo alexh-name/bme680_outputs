@@ -1,1 +1,31 @@
 # bme680_outputs
+
+## pretty_BSEC.sh
+
+This script checks a CSV of
+[BSEC](https://www.bosch-sensortec.com/bst/products/all_products/bsec)
+data from the
+[BME680 sensor](https://www.bosch-sensortec.com/en/bst/products/all_products/bme680)
+periodically for some significant change and gives feedback in form of a
+sentence, which can be useful for automatic notifications.
+
+### Example
+
+Average air 🙂 [92 IAQ], but it's cold ❄ [19.0 °C].
+
+### Dependencies
+
+* bc for float operations
+
+### CSV format
+
+Expected CSV format:
+`date,IAQ accuracy,IAQ index,temperature,humidity,pressure,gas,BSEC status`
+
+e.g:
+`2018-01-04 20:21:10,3,70.92,21.05,46.53,988.64,749721,0`
+
+You can find an example for fitting output code for
+[bsec_bme680_linux](https://github.com/alexh-name/bsec_bme680_linux)
+in the header of the file.
+
