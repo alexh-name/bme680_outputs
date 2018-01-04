@@ -26,6 +26,7 @@ set -eu
 
 LOGFILE="./log.csv"
 INTERVAL=30 # seconds, should be multiple of BME_INTERVAL
+LED="./LED_bars.py"
 
 BME_INTERVAL=3
 
@@ -96,6 +97,11 @@ FEEDBACKS=''          # list of reading types that already gave feedback
 ARRAY_COUNTER=0       # one array index for each limit_trigger() function
 STATUS_STRING=''      # status array as string
 STATUS_STRING_PAST='' # status string from last round
+LED_ARR[0]=0        # array of arguments for an extra program
+LED_ARR[1]='g'
+LED_ARR[2]='g'
+LED_ARR[3]='g'
+LED_ARR_INDEX=0
 FIRST_RUN=1           # is this the first round?
 NL='                  # newline
 '
@@ -178,14 +184,14 @@ out_readings () {
 # IN: string, limit direction (up or down)
 # IN: string, messgae to be printed
 # IN: int, is reaching this trigger problematic?
-# IN: string, extra actions
+# IN: string, status keyword for LEDs
 limit_trigger () {
   type="$1"
   limit="$2"
   limit_direction="$3"
   msg="$4"
   problem_trigger="$5"
-  action="$6"
+  keyword="$6"
 
   # make sure to grow the array to full size
   if [ ${FIRST_RUN} -eq 1 ]; then
@@ -214,14 +220,17 @@ limit_trigger () {
     air)
       reading="${I}"
       tolerance="${TOL_AIR}"
+      LED_ARR_INDEX=1
       ;;
     temp)
       reading="${T}"
       tolerance="${TOL_TEMP}"
+      LED_ARR_INDEX=2
       ;;
     hum)
       reading="${H}"
       tolerance="${TOL_HUM}"
+      LED_ARR_INDEX=3
       ;;
   esac
 
@@ -247,7 +256,7 @@ limit_trigger () {
     STATUS_ARR[${ARRAY_COUNTER}]=0
   else
     out_feedback "${msg}" "${problem_trigger}" "${type}"
-    ${action}
+    LED_ARR[${LED_ARR_INDEX}]="${keyword}"
     # add to list of types that reached limit
     FEEDBACKS="${FEEDBACKS}${NL}${type}"
     if [ ${problem_trigger} -ne 0 ]; then
@@ -273,27 +282,27 @@ output () {
   T_R="$( printf "%.1f" "${T}" )"
   H_R="$( printf "%.0f" "${H}" )"
 
-  # type; reading; limit; direction; message; problem 0|1; extra function
+  # type; reading; limit; direction; message; problem 0|1; keyword
   # make sure to arrange triggers of same type from worst to most harmless
-  limit_trigger 'air'  "${I_LIMIT_5}"      'up'   "VERY BAD air ${E_A_V} [${I_R} IAQ]"    1 ""
-  limit_trigger 'air'  "${I_LIMIT_4}"      'up'   "WORSE air ${E_A_W} [${I_R} IAQ]"       1 ""
-  limit_trigger 'air'  "${I_LIMIT_3}"      'up'   "BAD air ${E_A_B} [${I_R} IAQ]"         1 ""
-  limit_trigger 'air'  "${I_LIMIT_2}"      'up'   "little BAD air ${E_A_L} [${I_R} IAQ]"  1 ""
-  limit_trigger 'air'  "${I_LIMIT_1}"      'up'   "average air ${E_A_A} [${I_R} IAQ]"     0 ""
-  limit_trigger 'air'  "${I_LIMIT_1}"      'down' "good air ${E_A_G} [${I_R} IAQ]"        0 ""
+  limit_trigger 'air'  "${I_LIMIT_5}"      'up'   "VERY BAD air ${E_A_V} [${I_R} IAQ]"    1 "v"
+  limit_trigger 'air'  "${I_LIMIT_4}"      'up'   "WORSE air ${E_A_W} [${I_R} IAQ]"       1 "w"
+  limit_trigger 'air'  "${I_LIMIT_3}"      'up'   "BAD air ${E_A_B} [${I_R} IAQ]"         1 "b"
+  limit_trigger 'air'  "${I_LIMIT_2}"      'up'   "little BAD air ${E_A_L} [${I_R} IAQ]"  1 "l"
+  limit_trigger 'air'  "${I_LIMIT_1}"      'up'   "average air ${E_A_A} [${I_R} IAQ]"     0 "a"
+  limit_trigger 'air'  "${I_LIMIT_1}"      'down' "good air ${E_A_G} [${I_R} IAQ]"        0 "g"
 
   limit_trigger 'acc'  "${A_LIMIT_1}"      'down' "(I'm very unsure though)"              0 ""
   limit_trigger 'acc'  "${A_LIMIT_2}"      'down' "(I'm unsure though)"                   0 ""
   limit_trigger 'acc'  "${A_LIMIT_3}"      'down' "(I'm not fully sure though)"           0 ""
 
-  limit_trigger 'temp' "${T_LIMIT_UP_E}"   'up'   "it's HOT ${E_T_H} [${T_R} °C]"         1 ""
-  limit_trigger 'temp' "${T_LIMIT_UP}"     'up'   "it's warm ${E_T_H} [${T_R} °C]"        1 ""
-  limit_trigger 'temp' "${T_LIMIT_DOWN_E}" 'down' "it's FREEZING ${E_T_L} [${T_R} °C]"    1 ""
-  limit_trigger 'temp' "${T_LIMIT_DOWN}"   'down' "it's cold ${E_T_L} [${T_R} °C]"        1 ""
+  limit_trigger 'temp' "${T_LIMIT_UP_E}"   'up'   "it's HOT ${E_T_H} [${T_R} °C]"         1 "h"
+  limit_trigger 'temp' "${T_LIMIT_UP}"     'up'   "it's warm ${E_T_H} [${T_R} °C]"        1 "w"
+  limit_trigger 'temp' "${T_LIMIT_DOWN_E}" 'down' "it's FREEZING ${E_T_L} [${T_R} °C]"    1 "f"
+  limit_trigger 'temp' "${T_LIMIT_DOWN}"   'down' "it's cold ${E_T_L} [${T_R} °C]"        1 "c"
 
-  limit_trigger 'hum'  "${H_LIMIT_UP_E}"   'up'   "it's VERY humid ${E_H_H} [${H_R} %rH]" 1 ""
-  limit_trigger 'hum'  "${H_LIMIT_UP}"     'up'   "it's humid ${E_H_H} [${H_R} %rH]"      1 ""
-  limit_trigger 'hum'  "${H_LIMIT_DOWN}"   'down' "it's arid ${E_H_L} [${H_R} %rH]"       1 ""
+  limit_trigger 'hum'  "${H_LIMIT_UP_E}"   'up'   "it's VERY humid ${E_H_H} [${H_R} %rH]" 1 "v"
+  limit_trigger 'hum'  "${H_LIMIT_UP}"     'up'   "it's humid ${E_H_H} [${H_R} %rH]"      1 "h"
+  limit_trigger 'hum'  "${H_LIMIT_DOWN}"   'down' "it's arid ${E_H_L} [${H_R} %rH]"       1 "a"
 
   # array to string for comparison
   STATUS_STRING="$( printf "%s" "${STATUS_ARR[@]}" )"
@@ -309,7 +318,11 @@ output () {
     #else
     #fi
 
-    #t update "${OUTPUT}" > /dev/null || true
+    # for use with LED_bars.py
+    # ${LED} "${LED_ARR[1]}" "${LED_ARR[2]}" "${LED_ARR[3]}" || true
+
+    # for use with ruby twiiter cli t
+    # t update "${OUTPUT}" > /dev/null || true
 
     printf "%s\n" "${OUTPUT}"
   fi
@@ -325,6 +338,9 @@ output () {
   P='0'
   S='0'
   FIRST_RUN=0
+  LED_ARR[1]='g'
+  LED_ARR[2]='g'
+  LED_ARR[3]='g'
 }
 
 ### loop ###

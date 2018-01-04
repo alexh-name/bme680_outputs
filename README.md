@@ -29,3 +29,14 @@ You can find an example for fitting output code for
 [bsec_bme680_linux](https://github.com/alexh-name/bsec_bme680_linux)
 in the header of the file.
 
+## LED_bars.py
+
+A python script that can be triggered by pretty_BSEC.sh to draw bars for
+IAQ, temperature and humidity to a LED matrix. I used a
+[Unicorn HAT HD](https://shop.pimoroni.com/products/unicorn-hat-hd).
+
+### Dependencies
+
+* python
+* [unicorn-hat-hd](https://github.com/pimoroni/unicorn-hat-hd)
+
