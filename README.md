@@ -13,6 +13,8 @@ sentence, which can be useful for automatic notifications.
 
 Average air 🙂 [92 IAQ], but it's cold ❄ [19.0 °C].
 
+![alt text](https://github.com/alexh/bme680_outputs/raw/master/images/twitter_notification.jpg "Twitter notification")
+
 ### Dependencies
 
 * bc for float operations
@@ -34,6 +36,10 @@ in the header of the file.
 A python script that can be triggered by pretty_BSEC.sh to draw bars for
 IAQ, temperature and humidity to a LED matrix. I used a
 [Unicorn HAT HD](https://shop.pimoroni.com/products/unicorn-hat-hd).
+
+### Example
+
+![alt text](https://github.com/alexh/bme680_outputs/raw/master/images/LED_bars.jpg "LED bars")
 
 ### Dependencies
 
