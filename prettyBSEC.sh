@@ -210,6 +210,7 @@ limit_trigger () {
   # standard values
   tolerance='0.00'
   changes_status=1
+  LED_ARR_INDEX=0
 
   # assign readings, tolerances etc.
   case "${type}" in
