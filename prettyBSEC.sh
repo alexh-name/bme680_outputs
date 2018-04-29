@@ -86,7 +86,7 @@ S='0'   # BSEC status
 OUT_Q=$(( ${INTERVAL} / ${BME_INTERVAL} ))
 
 # the status array will be used to check whether limit triggers changed
-STATUS_ARR[0]=0
+typeset -a STATUS_ARR
 
 # other global vars
 LS=''                 # last lilne from the CSV
@@ -97,7 +97,7 @@ FEEDBACKS=''          # list of reading types that already gave feedback
 ARRAY_COUNTER=0       # one array index for each limit_trigger() function
 STATUS_STRING=''      # status array as string
 STATUS_STRING_PAST='' # status string from last round
-LED_ARR[0]=0        # array of arguments for an extra program
+typeset -a LED_ARR    # array of arguments for an extra program
 LED_ARR[1]='g'
 LED_ARR[2]='g'
 LED_ARR[3]='g'

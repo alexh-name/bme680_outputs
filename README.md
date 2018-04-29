@@ -18,6 +18,7 @@ Average air 🙂 [92 IAQ], but it's cold ❄ [19.0 °C].
 ### Dependencies
 
 * bc for float operations
+* sh that has integer indexed arrays
 
 ### CSV format
 
