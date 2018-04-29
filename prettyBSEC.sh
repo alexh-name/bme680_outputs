@@ -312,7 +312,7 @@ output () {
     # print output and remove leading or trailing whitespace and conjunction hints
     # also uppercase first letter
     OUTPUT="$( printf "%s" "${OUTPUT}" | sed -e 's/^,*\ *//' -e 's/[10]\ *$//' )"
-    upper="$( printf "%s" "${OUTPUT}" | cut -c 1 | tr [:lower:] [:upper:] )"
+    upper="$( printf "%s" "${OUTPUT}" | cut -c 1 | tr '[:lower:]' '[:upper:]' )"
     OUTPUT="$( printf "%s" "${OUTPUT}" | sed "s/^./${upper}/" )"
 
     #if [ $PROBLEM -ne 0 ]; then
