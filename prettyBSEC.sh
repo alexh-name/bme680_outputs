@@ -136,7 +136,7 @@ sv () {
 float_gt () {
   smaller="$1"
   greater="$2"
-  printf "%s\n" ${smaller}'<='${greater} | bc -l
+  printf '%s\n' ${smaller}'<='${greater} | bc -l
 }
 
 # put together a string to be printed
@@ -238,7 +238,7 @@ limit_trigger () {
   case "${limit_direction}" in
     up)
       if [ ${last_status} -eq 1 ]; then
-        limit="$( printf "%s\n" "${limit}-${tolerance}/2" | bc -l )"
+        limit="$( printf '%s\n' "${limit}-${tolerance}/2" | bc -l )"
       fi
       smaller="${reading}"
       greater="${limit}"
@@ -247,7 +247,7 @@ limit_trigger () {
       smaller="${limit}"
       greater="${reading}"
       if [ ${last_status} -eq 1 ]; then
-        limit="$( printf "%s\n" "${limit}+${tolerance}/2" | bc -l )"
+        limit="$( printf '%s\n' "${limit}+${tolerance}/2" | bc -l )"
       fi
       ;;
   esac
@@ -273,11 +273,11 @@ output () {
   #out_readings
 
   # get means
-  A="$( printf "%s\n" "scale=2; ${A}/${OUT_COUNTER}" | bc -l )"
-  I="$( printf "%s\n" "scale=2; ${I}/${OUT_COUNTER}" | bc -l )"
-  T="$( printf "%s\n" "scale=2; ${T}/${OUT_COUNTER}" | bc -l )"
-  H="$( printf "%s\n" "scale=2; ${H}/${OUT_COUNTER}" | bc -l )"
-  P="$( printf "%s\n" "scale=2; ${P}/${OUT_COUNTER}" | bc -l )"
+  A="$( printf '%s\n' "scale=2; ${A}/${OUT_COUNTER}" | bc -l )"
+  I="$( printf '%s\n' "scale=2; ${I}/${OUT_COUNTER}" | bc -l )"
+  T="$( printf '%s\n' "scale=2; ${T}/${OUT_COUNTER}" | bc -l )"
+  H="$( printf '%s\n' "scale=2; ${H}/${OUT_COUNTER}" | bc -l )"
+  P="$( printf '%s\n' "scale=2; ${P}/${OUT_COUNTER}" | bc -l )"
   # round for output
   I_R="$( printf "%.0f" "${I}" )"
   T_R="$( printf "%.1f" "${T}" )"
@@ -325,7 +325,7 @@ output () {
     # for use with ruby twiiter cli t
     # t update "${OUTPUT}" > /dev/null || true
 
-    printf "%s\n" "${OUTPUT}"
+    printf '%s\n' "${OUTPUT}"
   fi
 
   STATUS_STRING_PAST="${STATUS_STRING}"
@@ -353,11 +353,11 @@ main () {
 
   # add up readings that we want means from
   D="$( sv 1 )"
-  A="$( printf "%s\n" "${A}+$( sv 2 )" | bc -l )"
-  I="$( printf "%s\n" "${I}+$( sv 3 )" | bc -l )"
-  T="$( printf "%s\n" "${T}+$( sv 4 )" | bc -l )"
-  H="$( printf "%s\n" "${H}+$( sv 5 )" | bc -l )"
-  P="$( printf "%s\n" "${P}+$( sv 6 )" | bc -l )"
+  A="$( printf '%s\n' "${A}+$( sv 2 )" | bc -l )"
+  I="$( printf '%s\n' "${I}+$( sv 3 )" | bc -l )"
+  T="$( printf '%s\n' "${T}+$( sv 4 )" | bc -l )"
+  H="$( printf '%s\n' "${H}+$( sv 5 )" | bc -l )"
+  P="$( printf '%s\n' "${P}+$( sv 6 )" | bc -l )"
   S="$( sv 8 )"
 }
 
