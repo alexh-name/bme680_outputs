@@ -163,7 +163,7 @@ out_feedback () {
   # if type is accuracy, we might want to carry the problem status of the last
   # reading, not our own
   # also we might have a special conj in case of not very good accuracy
-  if [ "${t}" == 'acc' ]; then
+  if [ "${t}" = 'acc' ]; then
     p=${lc}
     conj=''
   fi
