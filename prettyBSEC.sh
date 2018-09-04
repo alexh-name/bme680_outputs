@@ -1,5 +1,5 @@
 #!/bin/sh
-# (c) alexh 2017
+# (c) alexh 2017-18
 
 # this will check a CSV from BME680 + BSEC readings for some significant change
 # and gives feedback in form of a sentence. useful for automatic notifications.
@@ -26,7 +26,10 @@ set -eu
 
 LOGFILE="./log.csv"
 INTERVAL=30 # seconds, should be multiple of BME_INTERVAL
-LED="./LED_bars.py"
+LED="./LED_bars_daemon.py"
+LED_FIFO='/tmp/unicornhat_bars.fifo'
+# for use with LED_bars_daemon.py
+# ${LED}&
 
 BME_INTERVAL=3
 
@@ -98,9 +101,10 @@ ARRAY_COUNTER=0       # one array index for each limit_trigger() function
 STATUS_STRING=''      # status array as string
 STATUS_STRING_PAST='' # status string from last round
 typeset -a LED_ARR    # array of arguments for an extra program
-LED_ARR[1]='g'
+LED_ARR[1]='3'
 LED_ARR[2]='g'
 LED_ARR[3]='g'
+LED_ARR[4]='g'
 LED_ARR_INDEX=0
 FIRST_RUN=1           # is this the first round?
 NL='                  # newline
@@ -217,21 +221,22 @@ limit_trigger () {
     acc)
       reading="${A}"
       changes_status=0
+      LED_ARR_INDEX=1
       ;;
     air)
       reading="${I}"
       tolerance="${TOL_AIR}"
-      LED_ARR_INDEX=1
+      LED_ARR_INDEX=2
       ;;
     temp)
       reading="${T}"
       tolerance="${TOL_TEMP}"
-      LED_ARR_INDEX=2
+      LED_ARR_INDEX=3
       ;;
     hum)
       reading="${H}"
       tolerance="${TOL_HUM}"
-      LED_ARR_INDEX=3
+      LED_ARR_INDEX=4
       ;;
   esac
 
@@ -292,9 +297,9 @@ output () {
   limit_trigger 'air'  "${I_LIMIT_1}"      'up'   "average air ${E_A_A} [${I_R} IAQ]"     0 "a"
   limit_trigger 'air'  "${I_LIMIT_1}"      'down' "good air ${E_A_G} [${I_R} IAQ]"        0 "g"
 
-  limit_trigger 'acc'  "${A_LIMIT_1}"      'down' "(I'm very unsure though)"              0 ""
-  limit_trigger 'acc'  "${A_LIMIT_2}"      'down' "(I'm unsure though)"                   0 ""
-  limit_trigger 'acc'  "${A_LIMIT_3}"      'down' "(I'm not fully sure though)"           0 ""
+  limit_trigger 'acc'  "${A_LIMIT_1}"      'down' "(I'm very unsure though)"              0 "0"
+  limit_trigger 'acc'  "${A_LIMIT_2}"      'down' "(I'm unsure though)"                   0 "1"
+  limit_trigger 'acc'  "${A_LIMIT_3}"      'down' "(I'm not fully sure though)"           0 "2"
 
   limit_trigger 'temp' "${T_LIMIT_UP_E}"   'up'   "it's HOT ${E_T_H} [${T_R} °C]"         1 "h"
   limit_trigger 'temp' "${T_LIMIT_UP}"     'up'   "it's warm ${E_T_H} [${T_R} °C]"        1 "w"
@@ -319,8 +324,8 @@ output () {
     #else
     #fi
 
-    # for use with LED_bars.py
-    # ${LED} "${LED_ARR[1]}" "${LED_ARR[2]}" "${LED_ARR[3]}" || true
+    # for use with LED_bars_daemon.py
+    # echo "${LED_ARR[1]}${LED_ARR[2]}${LED_ARR[3]}${LED_ARR[4]}" > "${LED_FIFO}"
 
     # for use with ruby twiiter cli t
     # t update "${OUTPUT}" > /dev/null || true
@@ -339,9 +344,10 @@ output () {
   P='0'
   S='0'
   FIRST_RUN=0
-  LED_ARR[1]='g'
+  LED_ARR[1]='3'
   LED_ARR[2]='g'
   LED_ARR[3]='g'
+  LED_ARR[4]='g'
 }
 
 ### loop ###
