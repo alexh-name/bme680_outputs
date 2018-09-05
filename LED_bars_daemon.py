@@ -50,11 +50,9 @@ parser.add_argument('-l', dest='layout_file',
                     metavar='FILE')
 args = parser.parse_args()
 
-width, height = unicornhathd.get_shape()
-pixels = []
-pixels_saved = []
-pixels_bars = []
-valid = False
+def clear_list(pixels):
+  print('CLEAR', len(pixels))
+  pixels.clear()
 
 # Convert string to list and check if input really was a list
 def listify(str):
@@ -63,86 +61,89 @@ def listify(str):
       return _list
 
 # Add a real list to pixels, skip strings that were no list
-def add_str(str):
+def add_str(str, pixels):
   try:
     list = listify(str)
-    add_pixel(pixels,list)
+    add_pixel(list, pixels)
   except:
     pass
 
-def add_pixel(list_list,list):
-  list_list.append(list)
-  print('ADD: ', list)
+def add_pixel(list, pixels):
+  pixels.append(list)
+  print('ADD', list)
 
 # Reset pixels
-def reset_pixels():
-  print(reset_s,len(pixels))
-  del pixels[:]
+def reset_pixels(pixels):
+  print(reset_s, len(pixels))
+  clear_list(pixels)
 
 # Restore bars
-def restore_bars():
-  for pixel in pixels_bars:
-    add_pixel(pixels,pixel)
-  print('RESTORE_BARS',len(pixels))
+def restore_bars(pixels):
+  if pixels != []:
+    for pixel in pixels:
+      add_pixel(pixel, pixels)
+    print('RESTORE_BARS', len(pixels))
 
-def read_fifo(fifo_file):
-  with open(fifo_file, 'r') as fifo:
-    for line in fifo:
-      s = line.strip()
+def read_fifo(fifo_file, pixels_cur, pixels_saved, pixels_bars):
+  fifo = open(fifo_file, 'r')
 
-      # RESET
-      if s == reset_s:
-        reset_pixels()
+  for line in fifo:
+    s = line.strip()
 
-      # RESET, restore bars
-      if s == reset_kb_s:
-        reset_pixels()
-        restore_bars()
+    # RESET
+    if s == reset_s:
+      reset_pixels(pixels_cur)
 
-      # SAVE
-      if s == save_s:
-        pixels_saved = pixels.copy()
-        print(save_s,len(pixels_saved))
+    # RESET, restore bars
+    if s == reset_kb_s:
+      reset_pixels(pixels_cur)
+      restore_bars(pixels_cur)
 
-      # LAYOUT
-      is_lo_s = s.startswith(layout_s)
-      if args.layout_file != None and is_lo_s == True:
-        b = s.replace(layout_s,"")
-        print(layout_s,b)
-        bars(b[0],b[1],b[2],b[3])
+    # SAVE
+    if s == save_s:
+      pixels_saved[:] = pixels_cur.copy()
+      print(save_s, len(pixels_saved))
 
-      # FIFO LIST
-      if s != reset_s and s != reset_kb_s and s != save_s and s != draw_s and is_lo_s != True:
-        # Add a pixel
-        add_str(s)
+    # BARS
+    is_lo_s = s.startswith(layout_s)
+    if args.layout_file != None and is_lo_s == True:
+      b = s.replace(layout_s, "")
+      print(layout_s, b)
+      bars(b[0], b[1], b[2], b[3], pixels_cur, pixels_saved, pixels_bars)
 
-      # DRAW
-      if s == draw_s:
-        # Draw pixels
-        print(draw_s,len(pixels))
-        draw()
+    # FIFO LIST
+    if s != reset_s and s != reset_kb_s and s != save_s and s != draw_s and is_lo_s != True:
+      # Add a pixel
+      add_str(s, pixels_cur)
+
+    # DRAW
+    if s == draw_s:
+      # Draw pixels
+      print(draw_s, len(pixels_cur))
+      draw(pixels_cur)
 
 # Read from static file
-def read_file(file):
+def read_file(file, pixels):
   f = open(file, "r")
   for line in f:
-    add_str(line)
+    add_str(line, pixels)
   f.close
 
 # Clear pixels in a range
 def blank(range_x, range_y):
   for x in range_x:
     for y in range_y:
-      r, g, b = 0,0,0
+      r, g, b = 0, 0, 0
       unicornhathd.set_pixel(x, y, r, g, b)
-      print('BLANK: ', [x, y, r, g, b])
+      print('BLANK', [x, y, r, g, b])
 
 # Set the pixels and show them
-def draw():
+def draw(pixels):
+  valid = False
   try:
     for p in pixels:
       valid = False
-      x, y, r, g, b = int(p[0]),int(p[1]),int(p[2]),int(p[3]),int(p[4])
+      x, y, r, g, b = int(p[0]), int(p[1]), int(p[2]), int(p[3]), int(p[4])
       if x != '' and y != '':
         if r or g or b:
           valid = True
@@ -155,19 +156,26 @@ def draw():
     unicornhathd.off()
 
 # Build a pixel from layout info
-def build_pixel(dict):
+def build_pixel(dict, pixels):
   for x in dict[4]:
     for y in range(dict[3]):
-      r, g, b = dict[0],dict[1],dict[2]
-      add_pixel(pixels,[x, y, r, g, b])
-      add_pixel(pixels_bars,[x, y, r, g, b])
+      pixels.append([x, y, dict[0], dict[1], dict[2]])
 
 # Prepare info from layout
-def bars(acc,air,temp,hum):
+def bars(acc, air, temp, hum, pixels_cur, pixels_saved, pixels_bars):
   try:
-    del pixels_bars[:]
-    pixels = pixels_saved.copy()
-    blank(range_x,range_y)
+    clear_list(pixels_cur)
+    clear_list(pixels_bars)
+
+    if len(pixels_saved) != 0:
+      pixels_cur[:] = pixels_saved.copy()
+
+    blank(range_x, range_y)
+
+    #global colors_acc
+    #global colors_air
+    #global colors_temp
+    #global colors_hum
 
     # Now we know the key for r, g, b, y, so we can also add x into the final dict
     colors_acc[acc].append(colors_acc['xs'])
@@ -181,23 +189,26 @@ def bars(acc,air,temp,hum):
     bars.append(colors_hum[hum])
 
     for bar in bars:
-      build_pixel(bar)
+      build_pixel(bar, pixels_cur)
+      build_pixel(bar, pixels_bars)
 
     if air == 'v':
       for x in colors_air['xs']:
         for y in range(5):
           if y != 1:
-            r, g, b = 255,0,0
-            add_pixel(pixels,[x, y, r, g, b])
-            add_pixel(pixels_bars,[x, y, r, g, b])
+            r, g, b = 255, 0, 0
+            add_pixel([x, y, r, g, b], pixels_cur)
+            add_pixel([x, y, r, g, b], pixels_bars)
     else:
-      build_pixel(colors_air[air])
+      build_pixel(colors_air[air], pixels_cur)
+      build_pixel(colors_air[air], pixels_bars)
 
   except:
     pass
 
 def blank_full():
-  blank(range(width),range(height))
+  width, height = unicornhathd.get_shape()
+  blank(range(width), range(height))
 
 # MAIN
 try:
@@ -225,8 +236,12 @@ try:
 
     atexit.register(cleanup)
 
+    pixels_cur = []
+    pixels_saved = []
+    pixels_bars = []
+
     while True:
-      read_fifo(file)
+      read_fifo(file, pixels_cur, pixels_saved, pixels_bars)
 
 except KeyboardInterrupt:
   unicornhathd.off()
