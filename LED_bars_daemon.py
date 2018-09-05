@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 #
-# Draw on the Unicorn HAT HD providing an array of pixels.
+# Draw on the Unicorn HAT HD providing a list of pixels.
 # You can provide a file for one time drawing
 # or run as daemon to write through a named pipe.
 #
 # Each pixel should be provided as a list of values, one per line:
 # '[x, y, r, g, b]'.
 #
-# You can tell the daemon to save, reset or draw the array by writing
-# save_str, reset_str or draw_str
+# You can tell the daemon to save, reset or draw the list by writing
+# save_s, reset_s or draw_s
 # to the pipe.
 #
 # For e.g. dynamic bars you can provide a layout file. Values for the bars can be written
-# via the named pipe, prefixed with layout_str.
+# via the named pipe, prefixed with layout_s.
 # $ echo LAYOUT3vwh > /tmp/unicornhat.fifo
 # Each character corresponding to a key in layout dict.
 # Order of characters:
@@ -20,6 +20,7 @@
 # 2. air quality,
 # 3. temperature,
 # 4. humidity
+# reset_kb_s will reset the list of pixels while reserving the last built bars.
 
 import ast
 import os
@@ -31,18 +32,19 @@ import unicornhathd
 unicornhathd.rotation(90)
 unicornhathd.brightness(0.1)
 
-reset_str='RESET'
-draw_str='DRAW'
-layout_str='LAYOUT'
-save_str='SAVE'
+reset_s='RESET'
+reset_kb_s='RESET_KB'
+draw_s='DRAW'
+layout_s='LAYOUT'
+save_s='SAVE'
 #---------------------------------
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument('-f', dest='array_file',
-                    help='File containing a saved array', metavar='FILE')
+parser.add_argument('-f', dest='list_file',
+                    help='File containing a saved list', metavar='FILE')
 parser.add_argument('-p', dest='fifo_file',
-                    help='FIFO named pipe receiving arrays', metavar='FILE')
+                    help='FIFO named pipe receiving lists', metavar='FILE')
 parser.add_argument('-l', dest='layout_file',
                     help='Layout file containing more complex drawing instructions',
                     metavar='FILE')
@@ -51,6 +53,7 @@ args = parser.parse_args()
 width, height = unicornhathd.get_shape()
 pixels = []
 pixels_saved = []
+pixels_bars = []
 valid = False
 
 # Convert string to list and check if input really was a list
@@ -63,13 +66,24 @@ def listify(str):
 def add_str(str):
   try:
     list = listify(str)
-    add_pixel(list)
+    add_pixel(pixels,list)
   except:
     pass
 
-def add_pixel(list):
-  pixels.append(list)
+def add_pixel(list_list,list):
+  list_list.append(list)
   print('ADD: ', list)
+
+# Reset pixels
+def reset_pixels():
+  print(reset_s,len(pixels))
+  del pixels[:]
+
+# Restore bars
+def restore_bars():
+  for pixel in pixels_bars:
+    add_pixel(pixels,pixel)
+  print('RESTORE_BARS',len(pixels))
 
 def read_fifo(fifo_file):
   with open(fifo_file, 'r') as fifo:
@@ -77,34 +91,35 @@ def read_fifo(fifo_file):
       s = line.strip()
 
       # RESET
-      if s == reset_str:
-        # Reset pixels
-        print(reset_str)
-        global pixels
-        pixels = []
+      if s == reset_s:
+        reset_pixels()
+
+      # RESET, restore bars
+      if s == reset_kb_s:
+        reset_pixels()
+        restore_bars()
 
       # SAVE
-      if s == save_str:
-        global pixels_saved
+      if s == save_s:
         pixels_saved = pixels.copy()
-        print(save_str,len(pixels_saved))
+        print(save_s,len(pixels_saved))
 
       # LAYOUT
-      is_layout_str = s.startswith(layout_str)
-      if args.layout_file != None and is_layout_str == True:
-        b = s.replace(layout_str,"")
-        print(layout_str,b)
+      is_lo_s = s.startswith(layout_s)
+      if args.layout_file != None and is_lo_s == True:
+        b = s.replace(layout_s,"")
+        print(layout_s,b)
         bars(b[0],b[1],b[2],b[3])
 
       # FIFO LIST
-      if s != reset_str and s != save_str and s != draw_str and is_layout_str != True:
+      if s != reset_s and s != reset_kb_s and s != save_s and s != draw_s and is_lo_s != True:
         # Add a pixel
         add_str(s)
 
       # DRAW
-      if s == draw_str:
+      if s == draw_s:
         # Draw pixels
-        print(draw_str,len(pixels))
+        print(draw_s,len(pixels))
         draw()
 
 # Read from static file
@@ -144,19 +159,15 @@ def build_pixel(dict):
   for x in dict[4]:
     for y in range(dict[3]):
       r, g, b = dict[0],dict[1],dict[2]
-      add_pixel([x, y, r, g, b])
+      add_pixel(pixels,[x, y, r, g, b])
+      add_pixel(pixels_bars,[x, y, r, g, b])
 
 # Prepare info from layout
 def bars(acc,air,temp,hum):
   try:
-    global pixels
+    del pixels_bars[:]
     pixels = pixels_saved.copy()
     blank(range_x,range_y)
-
-    global colors_acc
-    global colors_air
-    global colors_temp
-    global colors_hum
 
     # Now we know the key for r, g, b, y, so we can also add x into the final dict
     colors_acc[acc].append(colors_acc['xs'])
@@ -177,21 +188,25 @@ def bars(acc,air,temp,hum):
         for y in range(5):
           if y != 1:
             r, g, b = 255,0,0
-            add_pixel([x, y, r, g, b])
+            add_pixel(pixels,[x, y, r, g, b])
+            add_pixel(pixels_bars,[x, y, r, g, b])
     else:
       build_pixel(colors_air[air])
 
   except:
     pass
 
+def blank_full():
+  blank(range(width),range(height))
+
 # MAIN
 try:
   # tabula rasa
-  blank(range(width),range(height))
+  blank_full()
 
   # Static file
-  if args.array_file != None:
-    read_file(args.array_file)
+  if args.list_file != None:
+    read_file(args.list_file)
     draw()
 
   # Layout
