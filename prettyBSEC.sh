@@ -27,7 +27,7 @@ set -eu
 LOGFILE="./log.csv"
 INTERVAL=30 # seconds, should be multiple of BME_INTERVAL
 LED="./LED_bars_daemon.py"
-LED_FIFO='/tmp/unicornhat_bars.fifo'
+LED_FIFO='/tmp/unicornhat.fifo'
 # for use with LED_bars_daemon.py
 # ${LED}&
 
@@ -325,7 +325,8 @@ output () {
     #fi
 
     # for use with LED_bars_daemon.py
-    # echo "${LED_ARR[1]}${LED_ARR[2]}${LED_ARR[3]}${LED_ARR[4]}" > "${LED_FIFO}"
+    # echo "LAYOUT${LED_ARR[1]}${LED_ARR[2]}${LED_ARR[3]}${LED_ARR[4]}" > "${LED_FIFO}"
+    # echo 'DRAW' > "${LED_FIFO}"
 
     # for use with ruby twiiter cli t
     # t update "${OUTPUT}" > /dev/null || true
