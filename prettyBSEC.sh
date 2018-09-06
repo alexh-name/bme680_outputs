@@ -325,8 +325,10 @@ output () {
     #fi
 
     # for use with LED_bars_daemon.py
-    # echo -n "LAYOUT${LED_ARR[1]}${LED_ARR[2]}${LED_ARR[3]}${LED_ARR[4]}" > "${LED_FIFO}"
-    # echo -n 'DRAW' > "${LED_FIFO}"
+    # if [ -p "${LED_FIFO}" ]; then
+    #   echo -n "LAYOUT${LED_ARR[1]}${LED_ARR[2]}${LED_ARR[3]}${LED_ARR[4]}" > "${LED_FIFO}"
+    #   echo -n 'DRAW' > "${LED_FIFO}"
+    # fi
 
     # for use with ruby twiiter cli t
     # t update "${OUTPUT}" > /dev/null || true
