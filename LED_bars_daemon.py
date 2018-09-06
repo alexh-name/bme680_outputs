@@ -50,9 +50,28 @@ parser.add_argument('-l', dest='layout_file',
                     metavar='FILE')
 args = parser.parse_args()
 
-def clear_list(pixels):
-  print('CLEAR', len(pixels))
+# Clear pixels
+def clear_pixels(pixels):
+  print(reset_s, len(pixels))
   pixels.clear()
+
+# Blank drawn pixels in a range
+def blank_range(range_x, range_y):
+  for x in range_x:
+    for y in range_y:
+      r, g, b = 0, 0, 0
+      print('BLANK', [x, y, r, g, b])
+      unicornhathd.set_pixel(x, y, r, g, b)
+
+def blank_full():
+  width, height = unicornhathd.get_shape()
+  blank_range(range(width), range(height))
+
+
+# Adding pixels
+def add_pixel(list, pixels):
+  print('ADD', list)
+  pixels.append(list)
 
 # Convert string to list and check if input really was a list
 def listify(str):
@@ -68,14 +87,6 @@ def add_str(str, pixels):
   except:
     pass
 
-def add_pixel(list, pixels):
-  print('ADD', list)
-  pixels.append(list)
-
-# Reset pixels
-def reset_pixels(pixels):
-  print(reset_s, len(pixels))
-  clear_list(pixels)
 
 # Copy list, e.g. to restore bars
 def copy_pixels(pixels_from, pixels_to):
@@ -87,73 +98,6 @@ def copy_pixels(pixels_from, pixels_to):
 def overwrite_pixels(pixels_from, pixels_to):
   pixels_to[:] = pixels_from.copy()
 
-def read_fifo(fifo_file, pixels_cur, pixels_saved, pixels_bars):
-  fifo = open(fifo_file, 'r')
-
-  for line in fifo:
-    s = line.strip()
-
-    # RESET
-    if s == reset_s:
-      reset_pixels(pixels_cur)
-
-    # RESET, restore bars
-    if s == reset_kb_s:
-      overwrite_pixels(pixels_bars, pixels_cur)
-
-    # SAVE
-    if s == save_s:
-      print(save_s, len(pixels_saved))
-      overwrite_pixels(pixels_cur, pixels_saved)
-
-    # BARS
-    is_lo_s = s.startswith(layout_s)
-    if args.layout_file != None and is_lo_s == True:
-      bars(s, pixels_cur, pixels_saved, pixels_bars)
-
-    # FIFO LIST
-    if s != reset_s and s != reset_kb_s and s != save_s and s != draw_s and is_lo_s != True:
-      # Add a pixel
-      add_str(s, pixels_cur)
-
-    # DRAW
-    if s == draw_s:
-      # Draw pixels
-      print(draw_s, len(pixels_cur))
-      draw(pixels_cur)
-
-# Read from static file
-def read_file(file, pixels):
-  f = open(file, 'r')
-  for line in f:
-    add_str(line, pixels)
-  f.close
-
-# Clear pixels in a range
-def blank(range_x, range_y):
-  for x in range_x:
-    for y in range_y:
-      r, g, b = 0, 0, 0
-      print('BLANK', [x, y, r, g, b])
-      unicornhathd.set_pixel(x, y, r, g, b)
-
-# Set the pixels and show them
-def draw(pixels):
-  valid = False
-  try:
-    for p in pixels:
-      valid = False
-      x, y, r, g, b = int(p[0]), int(p[1]), int(p[2]), int(p[3]), int(p[4])
-      if x != '' and y != '':
-        if r or g or b:
-          valid = True
-          unicornhathd.set_pixel(x, y, r, g, b)
-
-    if valid:
-      unicornhathd.show()
-
-  except:
-    unicornhathd.off()
 
 # Build a pixel from layout info
 def build_pixel(dict, pixels):
@@ -168,13 +112,13 @@ def bars(str, pixels_cur, pixels_saved, pixels_bars):
     print(layout_s, b)
 
     acc, air, temp, hum = b[0], b[1], b[2], b[3]
-    clear_list(pixels_cur)
-    clear_list(pixels_bars)
+    clear_pixels(pixels_cur)
+    clear_pixels(pixels_bars)
 
     if len(pixels_saved) != 0:
       pixels_cur[:] = pixels_saved.copy()
 
-    blank(range_x, range_y)
+    blank_range(range_x, range_y)
 
     #global colors_acc
     #global colors_air
@@ -210,9 +154,70 @@ def bars(str, pixels_cur, pixels_saved, pixels_bars):
   except:
     pass
 
-def blank_full():
-  width, height = unicornhathd.get_shape()
-  blank(range(width), range(height))
+
+# Write the pixels and show them
+def draw(pixels):
+  valid = False
+  try:
+    for p in pixels:
+      valid = False
+      x, y, r, g, b = int(p[0]), int(p[1]), int(p[2]), int(p[3]), int(p[4])
+      if x != '' and y != '':
+        if r or g or b:
+          valid = True
+          unicornhathd.set_pixel(x, y, r, g, b)
+
+    if valid:
+      unicornhathd.show()
+
+  except:
+    unicornhathd.off()
+
+
+# Read lists from static file
+def read_file(file, pixels):
+  f = open(file, 'r')
+  for line in f:
+    add_str(line, pixels)
+  f.close
+
+
+# Read lists and commands from named pipe
+def read_fifo(fifo_file, pixels_cur, pixels_saved, pixels_bars):
+  fifo = open(fifo_file, 'r')
+
+  for line in fifo:
+    s = line.strip()
+
+    # RESET
+    if s == reset_s:
+      reset_pixels(pixels_cur)
+
+    # RESET, restore bars
+    if s == reset_kb_s:
+      overwrite_pixels(pixels_bars, pixels_cur)
+
+    # SAVE
+    if s == save_s:
+      print(save_s, len(pixels_saved))
+      overwrite_pixels(pixels_cur, pixels_saved)
+
+    # BARS
+    is_lo_s = s.startswith(layout_s)
+    if args.layout_file != None and is_lo_s == True:
+      bars(s, pixels_cur, pixels_saved, pixels_bars)
+
+    # FIFO LIST
+    if s != reset_s and s != reset_kb_s and s != save_s and s != draw_s and is_lo_s != True:
+      # Add a pixel
+      add_str(s, pixels_cur)
+
+    # DRAW
+    if s == draw_s:
+      # Draw pixels
+      print(draw_s, len(pixels_cur))
+      draw(pixels_cur)
+
 
 # MAIN
 try:
