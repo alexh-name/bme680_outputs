@@ -129,6 +129,9 @@ def bars(str, pixels_cur, pixels_saved, pixels_bars):
     colors_temp[temp].append(colors_temp['xs'])
     colors_hum[hum].append(colors_hum['xs'])
 
+    # Temporary local list of bar pixels
+    pixels = []
+
     # Make a list of the finals dicts to iterate over them
     bars = []
     bars.append(colors_acc[acc])
@@ -145,16 +148,14 @@ def bars(str, pixels_cur, pixels_saved, pixels_bars):
         for y in range(5):
           if y != 1:
             r, g, b = 255, 0, 0
-            add_pixel([x, y, r, g, b], pixels_cur)
-            add_pixel([x, y, r, g, b], pixels_bars)
+            add_pixel([x, y, r, g, b], pixels)
 
     # Build copy pixels from the dicts according to layout.
     # Also save them in pixels_bars, so they can be retrieved after blanking
     for bar in bars:
-      pixels = []
       build_pixels(bar, pixels)
-      copy_pixels(pixels, pixels_cur)
-      overwrite_pixels(pixels, pixels_bars)
+    copy_pixels(pixels, pixels_cur)
+    overwrite_pixels(pixels, pixels_bars)
 
   except:
     pass
