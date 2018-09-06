@@ -100,7 +100,7 @@ def overwrite_pixels(pixels_from, pixels_to):
 
 
 # Build a pixel from layout info
-def build_pixel(dict, pixels):
+def build_pixels(dict, pixels):
   for x in dict[4]:
     for y in range(dict[3]):
       pixels.append([x, y, dict[0], dict[1], dict[2]])
@@ -108,48 +108,52 @@ def build_pixel(dict, pixels):
 # Prepare info from layout
 def bars(str, pixels_cur, pixels_saved, pixels_bars):
   try:
+    # Remove prefix
     b = str.replace(layout_s, '')
     print(layout_s, b)
 
-    acc, air, temp, hum = b[0], b[1], b[2], b[3]
+    # Override current pixels with saved pixels, to avoid progressive grow of pixels
+    # with each update on bars
     clear_pixels(pixels_cur)
-    clear_pixels(pixels_bars)
-
     if len(pixels_saved) != 0:
       pixels_cur[:] = pixels_saved.copy()
 
+    # Make sure bars range is blanked
     blank_range(range_x, range_y)
 
-    #global colors_acc
-    #global colors_air
-    #global colors_temp
-    #global colors_hum
-
+    acc, air, temp, hum = b[0], b[1], b[2], b[3]
     # Now we know the key for r, g, b, y, so we can also add x into the final dict
     colors_acc[acc].append(colors_acc['xs'])
     colors_air[air].append(colors_air['xs'])
     colors_temp[temp].append(colors_temp['xs'])
     colors_hum[hum].append(colors_hum['xs'])
 
+    # Make a list of the finals dicts to iterate over them
     bars = []
     bars.append(colors_acc[acc])
     bars.append(colors_temp[temp])
     bars.append(colors_hum[hum])
 
-    for bar in bars:
-      build_pixel(bar, pixels_cur)
-      build_pixel(bar, pixels_bars)
-
-    if air == 'v':
+    # Special case for worst kind of air quality.
+    # Displays a red '!'
+    # Otherwise just add to the list like the others.
+    if air != 'v':
+      bars.append(colors_air[air])
+    else:
       for x in colors_air['xs']:
         for y in range(5):
           if y != 1:
             r, g, b = 255, 0, 0
             add_pixel([x, y, r, g, b], pixels_cur)
             add_pixel([x, y, r, g, b], pixels_bars)
-    else:
-      build_pixel(colors_air[air], pixels_cur)
-      build_pixel(colors_air[air], pixels_bars)
+
+    # Build copy pixels from the dicts according to layout.
+    # Also save them in pixels_bars, so they can be retrieved after blanking
+    for bar in bars:
+      pixels = []
+      build_pixels(bar, pixels)
+      copy_pixels(pixels, pixels_cur)
+      overwrite_pixels(pixels, pixels_bars)
 
   except:
     pass
