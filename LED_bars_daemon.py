@@ -96,6 +96,7 @@ def copy_pixels(pixels_from, pixels_to):
 
 # Overwrite list with list
 def overwrite_pixels(pixels_from, pixels_to):
+  print('OVERWRITE', len(pixels_to), 'with',  len(pixels_from))
   pixels_to[:] = pixels_from.copy()
 
 
@@ -161,6 +162,7 @@ def bars(str, pixels_cur, pixels_saved, pixels_bars):
 
 # Write the pixels and show them
 def draw(pixels):
+  print('DRAW', len(pixels))
   valid = False
   try:
     for p in pixels:
@@ -203,7 +205,6 @@ def read_fifo(fifo_file, pixels_cur, pixels_saved, pixels_bars):
 
     # SAVE
     if s == save_s:
-      print(save_s, len(pixels_saved))
       overwrite_pixels(pixels_cur, pixels_saved)
 
     # BARS
@@ -219,7 +220,6 @@ def read_fifo(fifo_file, pixels_cur, pixels_saved, pixels_bars):
     # DRAW
     if s == draw_s:
       # Draw pixels
-      print(draw_s, len(pixels_cur))
       draw(pixels_cur)
 
 
