@@ -77,12 +77,13 @@ def reset_pixels(pixels):
   print(reset_s, len(pixels))
   clear_list(pixels)
 
-# Restore bars
-def restore_bars(pixels):
-  if pixels != []:
-    for pixel in pixels:
-      add_pixel(pixel, pixels)
-    print('RESTORE_BARS', len(pixels))
+# Copy list, e.g. to restore bars
+def copy_pixels(pixels_from, pixels_to):
+  pixels_from_len = len(pixels_from)
+  if pixels_from_len != 0:
+    for pixel in pixels_from:
+      add_pixel(pixel, pixels_to)
+    print('RESTORE_BARS', pixels_from_len)
 
 def read_fifo(fifo_file, pixels_cur, pixels_saved, pixels_bars):
   fifo = open(fifo_file, 'r')
@@ -97,7 +98,7 @@ def read_fifo(fifo_file, pixels_cur, pixels_saved, pixels_bars):
     # RESET, restore bars
     if s == reset_kb_s:
       reset_pixels(pixels_cur)
-      restore_bars(pixels_cur)
+      copy_pixels(pixels_bars, pixels_cur)
 
     # SAVE
     if s == save_s:
