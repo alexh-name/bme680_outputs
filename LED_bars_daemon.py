@@ -120,7 +120,7 @@ def bars(str, pixels_cur, pixels_saved, pixels_bars):
       pixels_cur[:] = pixels_saved.copy()
 
     # Make sure bars range is blanked
-    blank_range(range_x, range_y)
+    blank_range(bars_range_x, bars_range_y)
 
     acc, air, temp, hum = b[0], b[1], b[2], b[3]
     # Now we know the key for r, g, b, y, so we can also add x into the final dict
