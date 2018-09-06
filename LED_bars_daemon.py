@@ -69,8 +69,8 @@ def add_str(str, pixels):
     pass
 
 def add_pixel(list, pixels):
-  pixels.append(list)
   print('ADD', list)
+  pixels.append(list)
 
 # Reset pixels
 def reset_pixels(pixels):
@@ -79,11 +79,13 @@ def reset_pixels(pixels):
 
 # Copy list, e.g. to restore bars
 def copy_pixels(pixels_from, pixels_to):
-  pixels_from_len = len(pixels_from)
-  if pixels_from_len != 0:
+  if len(pixels_from) != 0:
     for pixel in pixels_from:
       add_pixel(pixel, pixels_to)
-    print('RESTORE_BARS', pixels_from_len)
+
+# Overwrite list with list
+def overwrite_pixels(pixels_from, pixels_to):
+  pixels_to[:] = pixels_from.copy()
 
 def read_fifo(fifo_file, pixels_cur, pixels_saved, pixels_bars):
   fifo = open(fifo_file, 'r')
@@ -97,20 +99,17 @@ def read_fifo(fifo_file, pixels_cur, pixels_saved, pixels_bars):
 
     # RESET, restore bars
     if s == reset_kb_s:
-      reset_pixels(pixels_cur)
-      copy_pixels(pixels_bars, pixels_cur)
+      overwrite_pixels(pixels_bars, pixels_cur)
 
     # SAVE
     if s == save_s:
-      pixels_saved[:] = pixels_cur.copy()
       print(save_s, len(pixels_saved))
+      overwrite_pixels(pixels_cur, pixels_saved)
 
     # BARS
     is_lo_s = s.startswith(layout_s)
     if args.layout_file != None and is_lo_s == True:
-      b = s.replace(layout_s, '')
-      print(layout_s, b)
-      bars(b[0], b[1], b[2], b[3], pixels_cur, pixels_saved, pixels_bars)
+      bars(s, pixels_cur, pixels_saved, pixels_bars)
 
     # FIFO LIST
     if s != reset_s and s != reset_kb_s and s != save_s and s != draw_s and is_lo_s != True:
@@ -135,8 +134,8 @@ def blank(range_x, range_y):
   for x in range_x:
     for y in range_y:
       r, g, b = 0, 0, 0
-      unicornhathd.set_pixel(x, y, r, g, b)
       print('BLANK', [x, y, r, g, b])
+      unicornhathd.set_pixel(x, y, r, g, b)
 
 # Set the pixels and show them
 def draw(pixels):
@@ -163,8 +162,12 @@ def build_pixel(dict, pixels):
       pixels.append([x, y, dict[0], dict[1], dict[2]])
 
 # Prepare info from layout
-def bars(acc, air, temp, hum, pixels_cur, pixels_saved, pixels_bars):
+def bars(str, pixels_cur, pixels_saved, pixels_bars):
   try:
+    b = str.replace(layout_s, '')
+    print(layout_s, b)
+
+    acc, air, temp, hum = b[0], b[1], b[2], b[3]
     clear_list(pixels_cur)
     clear_list(pixels_bars)
 
