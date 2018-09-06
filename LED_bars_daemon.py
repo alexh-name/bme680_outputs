@@ -108,7 +108,7 @@ def read_fifo(fifo_file, pixels_cur, pixels_saved, pixels_bars):
     # BARS
     is_lo_s = s.startswith(layout_s)
     if args.layout_file != None and is_lo_s == True:
-      b = s.replace(layout_s, "")
+      b = s.replace(layout_s, '')
       print(layout_s, b)
       bars(b[0], b[1], b[2], b[3], pixels_cur, pixels_saved, pixels_bars)
 
@@ -125,7 +125,7 @@ def read_fifo(fifo_file, pixels_cur, pixels_saved, pixels_bars):
 
 # Read from static file
 def read_file(file, pixels):
-  f = open(file, "r")
+  f = open(file, 'r')
   for line in f:
     add_str(line, pixels)
   f.close
