@@ -1,7 +1,7 @@
 # Range, where the daemon should expect the bars
 
-range_x = range(4)
-range_y = range(5)
+bars_range_x = range(4)
+bars_range_y = range(5)
 
 # 'xs' is the range of x-coordinates to draw on
 
