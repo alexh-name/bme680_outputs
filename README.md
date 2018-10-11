@@ -47,3 +47,13 @@ IAQ, temperature and humidity to a LED matrix. I used a
 * python
 * [unicorn-hat-hd](https://github.com/pimoroni/unicorn-hat-hd)
 
+## Web Chart
+
+Simple live web chart using Chart.js.  
+Example pulls readings from CSV file via cgi-bin script.
+
+### Dependencies
+
+* Chart.js
+* jquery
+
