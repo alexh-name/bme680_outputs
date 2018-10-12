@@ -8,6 +8,7 @@ var IAQs = [];
 var TEMPs = [];
 var HUMs = [];
 var counter = 0;
+var entries_rec = 0;
 
 getCSV(url, entries);
 window.setInterval(update, 3000);
@@ -42,6 +43,7 @@ function prepareCSV(csv, mode) {
     csv = csv.split('\n');
     $.each(csv, function(index, item) {
       if (item != '') {
+        entries_rec++;
         assignCSV(item);
       }
     });
@@ -84,10 +86,15 @@ function update() {
       var Temp = TEMPs.slice(-1)[0];
       var Hum = HUMs.slice(-1)[0];
       var mode = 'add';
-      if (counter == 300) {
+      // see how many of requested entries were skipped
+      // only remove an entry after number of skipped entries
+      // so we keep a view of a constant time frame
+      var entries_skipped = Math.trunc(entries / entries_rec);
+      if (counter == entries_rec) {
         mode = 'move';
         counter = 0;
       }
+
       addLabel(chart, date, mode);
       addData(chart, C, 3, mode);
       addData(chart, IAQ, 2, mode);
